@@ -279,44 +279,83 @@ Untuk menerima argumen, digunakan parameter di fungsi main, dalam bentuk argc (u
 ## 3. Jaya adalah seorang programmer handal mahasiswa informatika. Suatu hari dia memperoleh tugas yang banyak dan berbeda tetapi harus dikerjakan secara bersamaan (multiprocessing).
 ### 3a. Program buatan jaya harus bisa membuat dua direktori di “/home/[USER]/modul2/”. Direktori yang pertama diberi nama “indomie”, lalu lima detik kemudian membuat direktori yang kedua bernama “sedaap”.
 ```
-pid_t child_id1, child_id2;
-  int status;
-
-  child_id1 = fork();
-  child_id2 = fork();
-
-  if (child_id1 < 0 || child_id2 < 0) {
-    exit(EXIT_FAILURE); // Jika gagal membuat proses baru, program akan berhenti
-  }
-
-  if(child_id1 > 0 && child_id2 > 0){
-    //parent
-    char *argv1[] = {"mkdir", "-p", "indomie", NULL};
-    execv("/bin/mkdir", argv1);
-    sleep(5);
-  }
-
-  else if(child_id1 == 0 && child_id2 > 0){
-    //child1
-    char *argv2[] = {"mkdir", "-p", "sedaap", NULL};
-    execv("/bin/mkdir", argv2);
-  }
+pid_t pid;
+    int status; 
+  
+    pid = fork(); 
+  
+    if (pid == 0) { 
+        char *argv[] = {"mkdir", "indomie", NULL};  
+        execv("/bin/mkdir", argv);
+    } 
+  
+    else { 
+        while ((wait(&status))>0);
+        sleep(5);
+        pid = fork();
+        if(pid == 0){
+          char *argv[] = {"mkdir", "sedaap", NULL};  
+          execv("/bin/mkdir", argv);
+        }
 ```
 Langkah-langkah :
-- fork() dua kali, karena nanti akan digunakan untuk sub-soal selanjutnya
-- Di proses pertama (parent process) akan membuat directory 'indomie' lalu sleep 5 detik
-- Di proses kedua (child1 process) akan membuat directory 'sedaap'
+- fork()
+- Di parent process fork() pertama akan membuat directory 'indomie' lalu sleep 5 detik
+- Di child process fork() pertama, fork() lagi untuk proses selanjutnya lalu di parent process dari fork kedua akan membuat directory 'sedaap'
 
 ### 3b. Kemudian program tersebut harus meng-ekstrak file jpg.zip di direktori “/home/[USER]/modul2/”. Setelah tugas sebelumnya selesai, ternyata tidak hanya itu tugasnya.
 ```
-else if(child_id1 > 0 && child_id2 == 0){
-    //child2
-    char *argv3[] = {"unzip", "/home/afiahana/Sisop/Modul2/Soal3/jpg.zip", NULL};
-    execv("/usr/bin/unzip", argv3);
-  }
+else{
+          while ((wait(&status)) > 0);
+          pid = fork(); 
+        if (pid == 0) { 
+            char *argv[] = {"unzip", "/home/afiahana/Sisop/Modul2/Soal3/jpg.zip", NULL}; 
+            execv("/usr/bin/unzip", argv);
+        } 
 ```
-Di proses ketiga (child2 process) akan unzip file 'jpg.zip'
+Langkah-langkah : 
+- Di child process fork() kedua, fork() lagi untuk proses selanjutnya
+- Di parent process fork ketiga akan unzip file 'jpg.zip'
 
 ### 3c. Diberilah tugas baru yaitu setelah di ekstrak, hasil dari ekstrakan tersebut (di dalam direktori “home/[USER]/modul2/jpg/”) harus dipindahkan sesuai dengan pengelompokan, semua file harus dipindahkan ke “/home/[USER]/modul2/sedaap/” dan semua direktori harus dipindahkan ke “/home/[USER]/modul2/indomie/”.
+```
+else { 
+            while ((wait(&status))>0);
+            pid = fork(); 
+            if (pid == 0) { 
+                char *argv[] = {"find","/home/afiahana/Sisop/Modul2/Soal3/jpg/.", "-type", "f","-exec","mv","{}","/home/afiahana/Sisop/Modul2/Soal3/sedaap",";", NULL}; 
+                execv("/usr/bin/find", argv);
+            } 
+            else { 
+              while ((wait(&status))>0);
+              pid = fork();
+              if (pid == 0){
+                char *argv[] = {"find", "/home/afiahana/Sisop/Modul2/Soal3/jpg/.","-type","d", "-exec", "mv", "{}", "/home/afiahana/Sisop/Modul2/Soal3/indomie",";" ,NULL};
+                execv("/usr/bin/find", argv);
+              }
+```
+Langkah-langkah : 
+- Di child process fork() ketiga, fork() lagi untuk proses selanjutnya
+- Di parent process fork() keempat akan mencari file di directory jpg lalu memindahkannya ke directory sedaap
+- Di child process fork() keempat, fork() lagi untuk proses selanjutnya
+- Di parent process fork() kelima akan mencari directory di directory jpg lalu memindahkannya ke directory indomie
 
 ### 3d. Untuk setiap direktori yang dipindahkan ke “/home/[USER]/modul2/indomie/” harus membuat dua file kosong. File yang pertama diberi nama “coba1.txt”, lalu 3 detik kemudian membuat file bernama “coba2.txt”. (contoh : “/home/[USER]/modul2/indomie/{nama_folder}/coba1.txt”).
+```
+else{
+                    while ((wait(&status))>0);
+                    pid = fork();
+                    if (pid == 0){
+                        char *argv[] = {"find", "/home/afiahana/Sisop/Modul2/Soal3/indomie/.","-mindepth","1","-maxdepth","1","-type","d", "-exec", "touch", "{}/coba1.txt ",";", NULL}; 
+                        execv("/usr/bin/find", argv);
+                    }
+                    else{
+                        while ((wait(&status))>0);
+                        sleep(3);
+                        char *argv[] = {"find", "/home/afiahana/Sisop/Modul2/Soal3/indomie/.","-mindepth","1","-maxdepth","1","-type","d", "-exec", "touch", "{}/coba2.txt ",";", NULL}; 
+                        execv("/usr/bin/find", argv);
+```
+Langkah-langkah : 
+- Di child process fork() kelima, fork() lagi untuk process selanjutnya
+- Di parent process fork() keenam akan membuat file "coba1.txt"
+- Di child process fork() keenam akan sleep 3 detik lalu membuat file "coba2.txt"
